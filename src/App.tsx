@@ -7,6 +7,7 @@ import { DassTestPage } from './pages/DassTestPage';
 import { CompletionPage } from './pages/CompletionPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { ClientDownloadPage } from './pages/ClientDownloadPage';
 import { TokenRecord, TestSession } from './types';
 import { validateToken, isSupabaseConfigured, supabase } from './lib/supabaseClient';
 
@@ -16,13 +17,15 @@ type AppView =
   | 'TEST'
   | 'COMPLETION'
   | 'ADMIN_LOGIN'
-  | 'ADMIN_DASHBOARD';
+  | 'ADMIN_DASHBOARD'
+  | 'CLIENT_DOWNLOAD';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('TOKEN_ENTRY');
   const [activeTokenRecord, setActiveTokenRecord] = useState<TokenRecord | null>(null);
   const [activeSession, setActiveSession] = useState<TestSession | null>(null);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [downloadRef, setDownloadRef] = useState<string | null>(null);
 
   // Listen for Supabase Auth state & Google OAuth redirects with whitelist check
   useEffect(() => {
@@ -90,10 +93,18 @@ export const App: React.FC = () => {
     const pathname = window.location.pathname;
     const searchParams = new URLSearchParams(window.location.search);
     const urlToken = searchParams.get('token');
+    const urlDownload = searchParams.get('download');
 
     // If returning from Google OAuth callback (hash contains access_token)
     if (window.location.hash.includes('access_token')) {
       // Handled by auth listener above
+      return;
+    }
+
+    // Encrypted Download Verification Gate
+    if (urlDownload) {
+      setDownloadRef(urlDownload);
+      setCurrentView('CLIENT_DOWNLOAD');
       return;
     }
 
@@ -237,6 +248,16 @@ export const App: React.FC = () => {
               window.history.pushState({}, '', '/');
             }}
             onNavigateHome={() => {
+              setCurrentView('TOKEN_ENTRY');
+              window.history.pushState({}, '', '/');
+            }}
+          />
+        )}
+        {currentView === 'CLIENT_DOWNLOAD' && downloadRef && (
+          <ClientDownloadPage
+            encryptedRef={downloadRef}
+            onNavigateHome={() => {
+              setDownloadRef(null);
               setCurrentView('TOKEN_ENTRY');
               window.history.pushState({}, '', '/');
             }}
