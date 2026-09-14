@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound, ArrowRight, AlertCircle, Shield, ExternalLink } from 'lucide-react';
+import { KeyRound, ArrowRight, AlertCircle, Shield, ExternalLink, Link2 } from 'lucide-react';
 import { validateToken } from '../lib/supabaseClient';
 import { TokenRecord, TestSession } from '../types';
 import { getSiteSettings, SiteSettings } from '../lib/siteSettings';
@@ -86,7 +86,7 @@ export const TokenEntryPage: React.FC<TokenEntryPageProps> = ({
 
       if (result.tokenRecord.status === 'SELESAI') {
         setErrorMessage(
-          'Token ini sudah digunakan dan tes telah selesai dikirim. Terima kasih atas partisipasi Anda.'
+          'Token ini sudah expired karena tes telah selesai dikerjakan secara lengkap. Token tidak dapat digunakan lagi untuk masuk ke sesi tes.'
         );
         setIsLoading(false);
         return;
@@ -204,18 +204,48 @@ export const TokenEntryPage: React.FC<TokenEntryPageProps> = ({
         {/* SEKSI UPDATE INSTAGRAM ANTARA PSYCHOLOGY VIA BEHOLD WIDGET */}
         {/* ========================================================================= */}
         <div className="mt-10 pt-8 border-t border-slate-200/80">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-xs">
-                <InstagramIcon className="w-4 h-4" />
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3.5 mb-4 bg-slate-50/80 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <div className="flex items-start gap-3 min-w-0">
+              {/* Logo Profil Instagram Asli Antara Psychology - Desain Bulat */}
+              <div className="relative shrink-0">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 shadow-xs">
+                  <div className="w-full h-full rounded-full bg-white p-0.5 overflow-hidden flex items-center justify-center">
+                    <img
+                      src={settings.logoUrl || '/logo.png'}
+                      alt="Antara Psychology"
+                      className="w-full h-full object-contain rounded-full"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>@{settings.instagramUsername || 'antarapsychology'}</span>
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  Update & Edukasi Kesehatan Mental Terkini
-                </p>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-sm font-bold text-slate-900 leading-tight">
+                    Antara Psychology
+                  </h3>
+                  <span className="text-[11px] font-medium text-slate-400">
+                    @{settings.instagramUsername || 'antarapsychology'}
+                  </span>
+                </div>
+
+                {/* Bio Asli Akun Instagram Antara Psychology */}
+                <div className="text-[11px] text-slate-600 mt-1 leading-snug space-y-0.5">
+                  <p className="font-medium text-slate-700">Every Growth Starts in Between</p>
+                  <p className="text-slate-500">Layanan Psikologi Online/Offline</p>
+                </div>
+
+                <div className="mt-1.5 flex items-center gap-1 text-[11px]">
+                  <Link2 className="w-3 h-3 text-purple-600 shrink-0" />
+                  <a
+                    href="https://lynk.id/antarapsychology"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-purple-700 hover:text-purple-800 hover:underline transition-colors"
+                  >
+                    lynk.id/antarapsychology
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -223,8 +253,9 @@ export const TokenEntryPage: React.FC<TokenEntryPageProps> = ({
               href={`https://www.instagram.com/${settings.instagramUsername || 'antarapsychology'}/`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-medium text-slate-700 transition shadow-xs hover:border-slate-300"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-700 transition shadow-xs hover:border-slate-300 shrink-0 self-start sm:self-auto"
             >
+              <InstagramIcon className="w-3.5 h-3.5 text-rose-500" />
               <span>Kunjungi IG</span>
               <ExternalLink className="w-3 h-3 text-slate-400" />
             </a>

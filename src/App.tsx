@@ -109,16 +109,21 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Try restoring from sessionStorage
+    // Try restoring from sessionStorage (Hanya jika belum SELESAI / expired)
     const savedToken = sessionStorage.getItem('antara_active_token');
     if (savedToken) {
       validateToken(savedToken).then((res) => {
         if (res.tokenRecord && res.session) {
+          if (res.tokenRecord.status === 'SELESAI') {
+            sessionStorage.removeItem('antara_active_token');
+            setActiveTokenRecord(null);
+            setActiveSession(null);
+            setCurrentView('TOKEN_ENTRY');
+            return;
+          }
           setActiveTokenRecord(res.tokenRecord);
           setActiveSession(res.session);
-          if (res.tokenRecord.status === 'SELESAI') {
-            setCurrentView('COMPLETION');
-          } else if (res.tokenRecord.status === 'SEDANG_MENGERJAKAN') {
+          if (res.tokenRecord.status === 'SEDANG_MENGERJAKAN') {
             setCurrentView('TEST');
           } else {
             setCurrentView('BIODATA');
@@ -147,6 +152,7 @@ export const App: React.FC = () => {
   };
 
   const handleTestSubmitted = (updatedToken: TokenRecord) => {
+    sessionStorage.removeItem('antara_active_token');
     setActiveTokenRecord(updatedToken);
     setCurrentView('COMPLETION');
   };

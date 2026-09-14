@@ -47,12 +47,31 @@ export function saveSiteSettings(settings: SiteSettings): void {
     console.error('Failed to save site settings', err);
   }
 }
-
 export function applySeoSettings(settings: SiteSettings): void {
   if (typeof document === 'undefined') return;
 
   // Title
   document.title = settings.siteTitle;
+
+  // Dynamic Favicon Update
+  const currentLogo = settings.logoUrl || '/logo.png';
+  let favicon = document.getElementById('site-favicon') as HTMLLinkElement | null;
+  if (!favicon) {
+    favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+  }
+  if (!favicon) {
+    favicon = document.createElement('link');
+    favicon.id = 'site-favicon';
+    favicon.rel = 'icon';
+    document.head.appendChild(favicon);
+  }
+  favicon.href = currentLogo;
+
+  // Apple touch icon
+  let appleIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement | null;
+  if (appleIcon) {
+    appleIcon.href = currentLogo;
+  }
 
   // Description meta
   let metaDesc = document.querySelector('meta[name="description"]');
@@ -71,4 +90,16 @@ export function applySeoSettings(settings: SiteSettings): void {
     document.head.appendChild(metaKeywords);
   }
   metaKeywords.setAttribute('content', settings.siteKeywords);
+}
+
+// Inisialisasi awal & sinkronisasi otomatis favicon dan SEO saat aplikasi berjalan
+if (typeof window !== 'undefined') {
+  applySeoSettings(getSiteSettings());
+  window.addEventListener('antara_settings_updated', (e: any) => {
+    if (e.detail) {
+      applySeoSettings(e.detail);
+    } else {
+      applySeoSettings(getSiteSettings());
+    }
+  });
 }

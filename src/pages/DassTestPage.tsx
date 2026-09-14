@@ -62,7 +62,7 @@ export const DassTestPage: React.FC<DassTestPageProps> = ({
     [tokenRecord.token]
   );
 
-  // Handle final submission
+  // Handle final submission: Seluruh 42 butir wajib diisi lengkap tanpa ada yang terlewat
   const executeSubmit = async (forced = false) => {
     // Check if all 42 are answered
     const unanswered: number[] = [];
@@ -72,10 +72,10 @@ export const DassTestPage: React.FC<DassTestPageProps> = ({
       }
     }
 
-    if (unanswered.length > 0 && !forced) {
+    if (unanswered.length > 0) {
       setUnansweredList(unanswered);
       setSubmitError(
-        `Masih terdapat ${unanswered.length} butir pertanyaan yang belum diisi. Mohon lengkapi seluruh pertanyaan sebelum mengirimkan kuesioner.`
+        `Masih terdapat ${unanswered.length} butir pertanyaan yang belum diisi (Pertanyaan nomor: ${unanswered.slice(0, 6).join(', ')}${unanswered.length > 6 ? '...' : ''}). Seluruh 42 pertanyaan wajib diisi lengkap tanpa ada yang terlewat agar tes dapat dikirim.`
       );
       // Scroll to the first unanswered question
       const firstUnansweredEl = document.getElementById(`q-${unanswered[0]}-opt-0`);
@@ -96,6 +96,13 @@ export const DassTestPage: React.FC<DassTestPageProps> = ({
         setSubmitError(result.error || 'Gagal mengirimkan jawaban.');
         setIsSubmitting(false);
         return;
+      }
+
+      // Hapus token aktif dari session storage browser
+      try {
+        sessionStorage.removeItem('antara_active_token');
+      } catch {
+        // ignore
       }
 
       const updatedToken: TokenRecord = {
