@@ -171,7 +171,7 @@ Aplikasi sudah dilengkapi tombol **"Masuk dengan Akun Google"** dan **Whitelist 
 ### C. Batasi Hanya Email Tertentu yang Boleh Menjadi Admin
 Di Netlify Environment Variables (atau file `.env`), tentukan variabel:
 ```env
-VITE_ALLOWED_ADMIN_EMAILS=admin@antarapsychology.com,fadhil@gmail.com
+VITE_ALLOWED_ADMIN_EMAILS=growntap@gmail.com,antarapsy.team@gmail.com
 ```
 > [!IMPORTANT]
 > Pisahkan dengan koma jika ada beberapa email admin. Siapapun yang mencoba masuk menggunakan akun Google di luar daftar tersebut otomatis **ditolak dan dikeluarkan secara instan**.
@@ -224,9 +224,9 @@ Sebelum klik deploy (atau via menu **Site configuration** &rarr; **Environment v
 
 | Key | Nilai |
 |---|---|
-| `VITE_SUPABASE_URL` | URL Supabase Anda (misal `https://xyzabc.supabase.co`) |
+| `VITE_SUPABASE_URL` | `https://hjlycxcuwdaqqcoohkgm.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Kunci Anon Public Supabase Anda (`eyJ...`) |
-| `VITE_ALLOWED_ADMIN_EMAILS` | Email Google admin yang diizinkan (misal `admin@antarapsychology.com,fadhil@gmail.com`) |
+| `VITE_ALLOWED_ADMIN_EMAILS` | `growntap@gmail.com,antarapsy.team@gmail.com` |
 
 5. Klik **"Deploy site"**. Dalam waktu ~1 menit, website Anda sudah aktif secara global di Netlify (misal `https://antara-psychology.netlify.app`).
 6. *(Opsional)* Di menu **Domain management**, Anda dapat menghubungkan domain kustom sendiri (contoh: `psikotes.antarapsychology.com`).
