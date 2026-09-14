@@ -30,7 +30,9 @@ export const App: React.FC = () => {
       const client = supabase;
       const verifyAllowedAdmin = async (userEmail?: string) => {
         if (!userEmail) return false;
-        const allowedRaw = (import.meta.env.VITE_ALLOWED_ADMIN_EMAILS as string) || '';
+        const DEFAULT_ALLOWED_EMAILS = 'growntap@gmail.com,antarapsy.team@gmail.com';
+        const allowedRaw =
+          ((import.meta.env.VITE_ALLOWED_ADMIN_EMAILS as string) || DEFAULT_ALLOWED_EMAILS);
         const allowedList = allowedRaw
           .split(',')
           .map((e) => e.trim().toLowerCase())

@@ -1,8 +1,16 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { TokenRecord, TestSession, ClientBiodata, DassResult, TestSessionWithTokens } from '../types';
 
-const envUrl = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_URL) || '';
-const envKey = (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_ANON_KEY) || '';
+const DEFAULT_SUPABASE_URL = 'https://hjlycxcuwdaqqcoohkgm.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqbHljeGN1d2RhcXFjb29oa2dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNzczMzcsImV4cCI6MjEwNDk1MzMzN30.wSDdso_ZSND4RgW_jJKeNbV9s3pu81yfbpJeu2o6a7U';
+
+const envUrl =
+  (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_URL) ||
+  DEFAULT_SUPABASE_URL;
+const envKey =
+  (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_ANON_KEY) ||
+  DEFAULT_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(
   envUrl &&
