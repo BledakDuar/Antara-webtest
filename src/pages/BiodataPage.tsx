@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, Calendar, MapPin, Briefcase, GraduationCap, ArrowRight, ArrowLeft } from 'lucide-react';
 import { TokenRecord, TestSession, ClientBiodata, Gender, Education } from '../types';
 import { saveClientBiodata } from '../lib/supabaseClient';
@@ -302,6 +302,9 @@ export const BiodataPage: React.FC<BiodataPageProps> = ({
                     <option value="SMA/SMK">SMA / SMK</option>
                     <option value="D3">Diploma (D3)</option>
                     <option value="S1">Sarjana (S1)</option>
+                    <option value="Profesi">Profesi</option>
+                    <option value="Sarjana Profesi">Sarjana Profesi</option>
+                    <option value="Magister Profesi">Magister Profesi</option>
                     <option value="S2">Magister (S2)</option>
                     <option value="S3">Doktoral (S3)</option>
                     <option value="Lainnya">Lainnya</option>

@@ -88,7 +88,7 @@ export const CompletionPage: React.FC<CompletionPageProps> = ({
           const tgl = session.test_date || (tokenRecord.submitted_at
             ? new Date(tokenRecord.submitted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
             : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
-          const waMessage = `[ *JANGAN EDIT PESAN INI*]\n\nHalo ${namaLengkap}, saya ingin mengkonfirmasi bahwa telah selesai mengisi kuesioner dengan ${kodeToken}-${namaSesi}-${tgl}.`;
+          const waMessage = `[ *JANGAN EDIT PESAN INI* ]\n\nHalo saya ${namaLengkap}, saya ingin mengkonfirmasi bahwa telah selesai mengisi kuesioner dengan ${kodeToken}-${namaSesi}-${tgl}.`;
           const waUrl = `https://api.whatsapp.com/send?phone=6285139767220&text=${encodeURIComponent(waMessage)}`;
 
           return (

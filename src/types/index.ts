@@ -4,7 +4,18 @@ export type TokenStatus = 'BELUM_DIGUNAKAN' | 'SEDANG_MENGERJAKAN' | 'SELESAI';
 
 export type Gender = 'Laki-laki' | 'Perempuan';
 
-export type Education = 'SD' | 'SMP' | 'SMA/SMK' | 'D3' | 'S1' | 'S2' | 'S3' | 'Lainnya';
+export type Education =
+  | 'SD'
+  | 'SMP'
+  | 'SMA/SMK'
+  | 'D3'
+  | 'S1'
+  | 'Profesi'
+  | 'Sarjana Profesi'
+  | 'Magister Profesi'
+  | 'S2'
+  | 'S3'
+  | 'Lainnya';
 
 export interface ClientBiodata {
   fullName: string;
