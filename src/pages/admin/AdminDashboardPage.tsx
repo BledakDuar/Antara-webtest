@@ -142,11 +142,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     };
   }, [currentSession]);
 
-  // Copy token link helper
-  const handleCopyLink = (token: string) => {
-    const origin = window.location.origin;
-    const link = `${origin}/?token=${token}`;
-    navigator.clipboard.writeText(link);
+  // Copy 4 kode unik token helper (hanya 4 karakter belakang, bukan link lengkap)
+  const handleCopyTokenCode = (token: string) => {
+    const codeOnly = token.replace(/^ANT-?/i, '').trim() || token;
+    navigator.clipboard.writeText(codeOnly);
     setCopiedToken(token);
     setTimeout(() => setCopiedToken(null), 2000);
   };
@@ -591,9 +590,9 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                           <div className="flex items-center gap-1.5">
                             <span>{tokenRecord.token}</span>
                             <button
-                              onClick={() => handleCopyLink(tokenRecord.token)}
+                              onClick={() => handleCopyTokenCode(tokenRecord.token)}
                               className="text-slate-400 hover:text-purple-600 transition"
-                              title="Salin tautan langsung"
+                              title="Salin 4 kode unik token"
                             >
                               {copiedToken === tokenRecord.token ? (
                                 <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -1526,11 +1525,11 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                         <span>Telegram</span>
                       </button>
 
-                      {/* Copy Link */}
+                      {/* Copy 4 Kode Unik */}
                       <button
-                        onClick={() => handleCopyLink(t.token)}
+                        onClick={() => handleCopyTokenCode(t.token)}
                         className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-200 hover:border-purple-300 text-slate-700 text-[11px] transition"
-                        title="Salin tautan"
+                        title="Salin 4 kode unik token"
                       >
                         {copiedToken === t.token ? (
                           <Check className="w-3 h-3 text-emerald-600" />
