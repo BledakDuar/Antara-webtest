@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ShieldCheck, FileDown, AlertCircle, ArrowLeft, CheckCircle2, Lock, KeyRound } from 'lucide-react';
-import { decryptReportDownloadRef } from '../lib/reportSecurity';
+import { decryptReportDownloadRef, computeSecureTokenHash } from '../lib/reportSecurity';
 import { validateToken } from '../lib/supabaseClient';
 import { downloadClinicalPdfReport } from '../lib/pdfGenerator';
 import { TokenRecord, TestSession } from '../types';
@@ -19,8 +19,30 @@ export const ClientDownloadPage: React.FC<ClientDownloadPageProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  // Kunci penyimpanan sesi untuk rate limiting percobaan gagal
+  const rateLimitKey = useMemo(() => {
+    return `antara_ratelimit_${encryptedRef.slice(-20).replace(/[^a-zA-Z0-9]/g, '')}`;
+  }, [encryptedRef]);
+
+  const [failedAttempts, setFailedAttempts] = useState<number>(() => {
+    try {
+      const stored = sessionStorage.getItem(`${rateLimitKey}_fails`);
+      return stored ? parseInt(stored, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(() => {
+    try {
+      const stored = sessionStorage.getItem(`${rateLimitKey}_cooldown`);
+      const val = stored ? parseInt(stored, 10) : null;
+      return val && val > Date.now() ? val : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [verifiedData, setVerifiedData] = useState<{
     tokenRecord: TokenRecord;
     session: TestSession;
@@ -55,21 +77,34 @@ export const ClientDownloadPage: React.FC<ClientDownloadPageProps> = ({
     }
 
     const cleanInput = tokenInput.trim().toUpperCase().replace(/^ANT-?/i, '').replace(/[^A-Z0-9]/g, '');
-    const targetSuffix = payload.token.toUpperCase().replace(/^ANT-?/i, '').replace(/[^A-Z0-9]/g, '');
 
     if (!cleanInput) {
       setErrorMessage('Silakan masukkan 4 karakter kode token unik Anda.');
       return;
     }
 
-    // Verifikasi apakah token yang dimasukkan cocok dengan enkripsi dokumen
-    if (cleanInput !== targetSuffix) {
+    // Verifikasi apakah token cocok (mendukung one-way hash baru dan format lama)
+    let isMatch = false;
+    if (payload.tokenHash) {
+      isMatch = computeSecureTokenHash(cleanInput) === payload.tokenHash;
+    } else if (payload.token) {
+      const targetSuffix = payload.token.toUpperCase().replace(/^ANT-?/i, '').replace(/[^A-Z0-9]/g, '');
+      isMatch = cleanInput === targetSuffix;
+    }
+
+    if (!isMatch) {
       const nextFailed = failedAttempts + 1;
       setFailedAttempts(nextFailed);
+      try {
+        sessionStorage.setItem(`${rateLimitKey}_fails`, String(nextFailed));
+      } catch {}
 
       if (nextFailed >= 5) {
         const cooldown = Date.now() + 60 * 1000;
         setCooldownUntil(cooldown);
+        try {
+          sessionStorage.setItem(`${rateLimitKey}_cooldown`, String(cooldown));
+        } catch {}
         setErrorMessage('Terlalu banyak percobaan yang salah. Akses ditahan selama 60 detik demi keamanan dokumen klinis Anda.');
       } else {
         setErrorMessage(
@@ -88,6 +123,24 @@ export const ClientDownloadPage: React.FC<ClientDownloadPageProps> = ({
       const res = await validateToken(fullTokenCode);
 
       if (res.tokenRecord && res.session) {
+        // Validasi silang: pastikan token terdaftar pada sesi yang sesuai
+        if (payload.sessionId && res.tokenRecord.session_id !== payload.sessionId) {
+          setErrorMessage('Token valid namun tidak terkait dengan sesi pemeriksaan ini.');
+          return;
+        }
+
+        // Validasi kelengkapan tes
+        if (res.tokenRecord.status !== 'SELESAI') {
+          setErrorMessage('Laporan asesmen belum tersedia karena tes belum diselesaikan.');
+          return;
+        }
+
+        // Reset rate limiting saat verifikasi berhasil
+        try {
+          sessionStorage.removeItem(`${rateLimitKey}_fails`);
+          sessionStorage.removeItem(`${rateLimitKey}_cooldown`);
+        } catch {}
+
         setVerifiedData({
           tokenRecord: res.tokenRecord,
           session: res.session,

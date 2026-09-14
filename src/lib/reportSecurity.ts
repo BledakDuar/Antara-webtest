@@ -63,8 +63,32 @@ function computeSignature(payload: string): string {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
 
+/**
+ * Komputasi hash satu arah token untuk verifikasi tanpa menyimpan plaintext token di URL
+ */
+export function computeSecureTokenHash(token: string): string {
+  const clean = token.trim().toUpperCase().replace(/^ANT-?/i, '');
+  const salt = `${SECURITY_SECRET}_TokenVerifierSalt_2026`;
+  let h1 = 0x811c9dc5;
+  let h2 = 0xcbf29ce4;
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 16777619);
+    h2 = Math.imul(h2 ^ ch, 1099511628);
+  }
+  for (let i = 0; i < salt.length; i++) {
+    const ch = salt.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 16777619);
+    h2 = Math.imul(h2 ^ ch, 1099511628);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `${(h1 >>> 0).toString(36)}-${(h2 >>> 0).toString(36)}`;
+}
+
 export interface EncryptedReportPayload {
-  token: string;
+  token?: string;
+  tokenHash?: string;
   sessionId: string;
   issuedAt: number;
 }
@@ -74,8 +98,9 @@ export interface EncryptedReportPayload {
  */
 export function encryptReportDownloadRef(token: string, sessionId: string): string {
   const cleanToken = token.trim().toUpperCase();
+  const tokenHash = computeSecureTokenHash(cleanToken);
   const payloadData = JSON.stringify({
-    t: cleanToken,
+    th: tokenHash,
     s: sessionId,
     iat: Date.now(),
   });
@@ -113,12 +138,20 @@ export function decryptReportDownloadRef(encryptedRef: string): EncryptedReportP
     const jsonStr = xorTransform(cipher, SECURITY_SECRET);
     const parsed = JSON.parse(jsonStr);
 
-    if (!parsed || !parsed.t || !parsed.s) {
+    if (!parsed || (!parsed.th && !parsed.t) || !parsed.s) {
+      return null;
+    }
+
+    // Validasi masa berlaku tautan (maksimal 60 hari)
+    const MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
+    if (parsed.iat && Date.now() - parsed.iat > MAX_AGE_MS) {
+      console.warn('Download reference has expired');
       return null;
     }
 
     return {
       token: parsed.t,
+      tokenHash: parsed.th,
       sessionId: parsed.s,
       issuedAt: parsed.iat || Date.now(),
     };

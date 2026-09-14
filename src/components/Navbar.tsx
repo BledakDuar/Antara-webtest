@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   // Sembunyikan shortcut admin pada tampilan klien untuk menjaga privasi & fokus klinis
-  const isClientView = ['TOKEN_ENTRY', 'BIODATA', 'TEST', 'COMPLETION'].includes(currentView);
+  const isClientView = ['TOKEN_ENTRY', 'BIODATA', 'TEST', 'COMPLETION', 'CLIENT_DOWNLOAD'].includes(currentView);
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-colors">
