@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FBFBF9;
+    color: #334155;
+    font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+  }
+}
+
+/* Custom smooth transitions & clinical clean focus rings */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #7C3AED !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* Hide scrollbar for tabs/clean views */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Print styles for official PDF clinical reports */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  header, footer, .print\:hidden {
+    display: none !important;
+  }
+  body {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .pdf-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+}
+
