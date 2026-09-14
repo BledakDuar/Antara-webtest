@@ -23,10 +23,12 @@ import {
   Image as ImageIcon,
   Upload,
   RotateCcw,
+  UserPlus,
 } from 'lucide-react';
 import {
   getAllSessions,
   createNewSession,
+  addTokensToSession,
   subscribeToSessionTokens,
   updateTokenNotes,
 } from '../../lib/supabaseClient';
@@ -59,6 +61,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [isTokenListModalOpen, setIsTokenListModalOpen] = useState(false);
   const [pdfReportToken, setPdfReportToken] = useState<TokenRecord | null>(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isAddTokenModalOpen, setIsAddTokenModalOpen] = useState(false);
+  const [addTokenCount, setAddTokenCount] = useState<number>(1);
+  const [isAddingTokens, setIsAddingTokens] = useState(false);
+  const [addTokenToast, setAddTokenToast] = useState<string | null>(null);
 
   // Settings State
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(getSiteSettings());
@@ -198,6 +204,42 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       console.error(err);
     } finally {
       setIsCreatingSession(false);
+    }
+  };
+
+  // Add Tokens to Existing Session Handler
+  const handleAddTokensSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentSession || addTokenCount < 1) return;
+
+    setIsAddingTokens(true);
+    try {
+      const count = Number(addTokenCount) || 1;
+      const res = await addTokensToSession(currentSession.id, count);
+      if (res.newTokens && res.newTokens.length > 0) {
+        setSessions((prev) =>
+          prev.map((s) => {
+            if (s.id === currentSession.id) {
+              return {
+                ...s,
+                participant_quota: (s.participant_quota || s.tokens.length) + res.newTokens.length,
+                tokens: [...s.tokens, ...res.newTokens],
+              };
+            }
+            return s;
+          })
+        );
+        setIsAddTokenModalOpen(false);
+        setAddTokenToast(
+          `Berhasil menambahkan ${res.newTokens.length} orang/token baru ke dalam sesi "${currentSession.title}"!`
+        );
+        setAddTokenCount(1);
+        setTimeout(() => setAddTokenToast(null), 3500);
+      }
+    } catch (err: any) {
+      console.error('Gagal menambahkan token baru:', err);
+    } finally {
+      setIsAddingTokens(false);
     }
   };
 
@@ -437,6 +479,22 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+        {/* Toast Notifikasi Penambahan Token */}
+        {addTokenToast && (
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between animate-in fade-in-50 duration-200 shadow-sm">
+            <div className="flex items-center gap-2 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{addTokenToast}</span>
+            </div>
+            <button
+              onClick={() => setAddTokenToast(null)}
+              className="p-1 rounded-md text-emerald-700 hover:bg-emerald-100/80 transition"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Session Header Card */}
         {currentSession ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
@@ -468,6 +526,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
               {/* Action Buttons for this session */}
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setIsAddTokenModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 active:bg-purple-900 text-white text-xs font-semibold transition shadow-xs hover:shadow"
+                  title="Tambah peserta atau token baru ke dalam sesi ini"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ Tambah Orang / Token</span>
+                </button>
                 <button
                   onClick={() => setIsTokenListModalOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition"
@@ -524,16 +590,29 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         {/* Realtime Live Monitor Table */}
         {currentSession && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-purple-600 animate-pulse" />
                 <h2 className="text-sm font-bold text-slate-900">
                   Live Token Monitor (Realtime Sync)
                 </h2>
+                <span className="text-[11px] text-slate-400 font-normal hidden sm:inline">
+                  &bull; {currentSession.tokens.length} Token Terdaftar
+                </span>
               </div>
-              <span className="text-[11px] text-slate-400">
-                Data otomatis tersinkron saat peserta mengisi biodata atau jawaban
-              </span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-[11px] text-slate-400 hidden md:inline">
+                  Otomatis tersinkron saat peserta mengisi biodata / jawaban
+                </span>
+                <button
+                  onClick={() => setIsAddTokenModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold transition"
+                  title="Tambah peserta / token baru ke dalam sesi ini"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ Tambah Token</span>
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -1465,12 +1544,22 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 </h3>
                 <p className="text-xs text-slate-500">Sesi: {currentSession.title}</p>
               </div>
-              <button
-                onClick={() => setIsTokenListModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsAddTokenModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold transition shadow-xs"
+                  title="Tambah peserta atau token baru"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ Tambah Token</span>
+                </button>
+                <button
+                  onClick={() => setIsTokenListModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
@@ -1557,6 +1646,117 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 Selesai
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: TAMBAH ORANG / TOKEN BARU KE DALAM SESI */}
+      {/* ========================================================================= */}
+      {isAddTokenModalOpen && currentSession && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700 shrink-0">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Tambah Orang / Token Baru
+                  </h3>
+                  <p className="text-xs text-slate-500 truncate max-w-[240px]">
+                    Sesi: {currentSession.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAddTokenModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddTokensSubmit} className="p-5 sm:p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+                  Jumlah Orang / Token yang Ingin Ditambahkan
+                </label>
+
+                {/* Quick Select Buttons */}
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[1, 3, 5, 10].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setAddTokenCount(num)}
+                      className={`py-2 text-xs font-semibold rounded-xl border transition ${
+                        addTokenCount === num
+                          ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      +{num} Orang
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={addTokenCount}
+                    onChange={(e) =>
+                      setAddTokenCount(Math.max(1, Math.min(50, parseInt(e.target.value) || 1)))
+                    }
+                    className="w-full text-sm py-2.5 px-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 transition font-medium text-slate-800"
+                    placeholder="Masukkan jumlah..."
+                    required
+                  />
+                  <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
+                    Token Baru
+                  </span>
+                </div>
+              </div>
+
+              {/* Information Note */}
+              <div className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-100 text-xs text-purple-900 leading-relaxed space-y-1">
+                <p className="font-semibold flex items-center gap-1.5 text-purple-800">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                  Otomatis Terbit & Langsung Aktif
+                </p>
+                <p className="text-[11px] text-purple-700">
+                  Sistem akan menerbitkan <strong>{addTokenCount} token unik</strong> baru bertipe <code className="bg-white/80 px-1 py-0.5 rounded font-mono text-purple-900">ANT-XXXX</code> berstatus <strong>Belum Digunakan</strong>. Total kuota sesi ini akan bertambah dari <strong>{currentSession.tokens.length}</strong> menjadi <strong>{currentSession.tokens.length + Number(addTokenCount)}</strong>.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddTokenModalOpen(false)}
+                  disabled={isAddingTokens}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-700 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAddingTokens}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 active:bg-purple-900 text-white text-xs font-semibold transition shadow-xs disabled:opacity-50"
+                >
+                  {isAddingTokens ? (
+                    <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Tambahkan {addTokenCount} Token Baru</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

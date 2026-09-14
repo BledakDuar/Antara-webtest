@@ -413,6 +413,64 @@ export async function createNewSession(data: {
   return { session: newSession, tokens: generatedTokens };
 }
 
+export async function addTokensToSession(
+  sessionId: string,
+  count: number = 1
+): Promise<{ newTokens: TokenRecord[]; error?: string }> {
+  const generatedTokens: TokenRecord[] = [];
+
+  for (let i = 0; i < count; i++) {
+    generatedTokens.push({
+      token: generateRandomTokenCode(),
+      session_id: sessionId,
+      status: 'BELUM_DIGUNAKAN',
+      client_biodata: null,
+      answers: {},
+      scores: null,
+      notes_conclusion: '',
+      started_at: null,
+      submitted_at: null,
+      last_saved_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  // 1. Supabase sync jika aktif
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error: tokErr } = await supabase.from('tokens').insert(generatedTokens);
+      if (!tokErr) {
+        const { data: currSess } = await supabase
+          .from('test_sessions')
+          .select('participant_quota')
+          .eq('id', sessionId)
+          .single();
+
+        if (currSess) {
+          await supabase
+            .from('test_sessions')
+            .update({ participant_quota: (currSess.participant_quota || 0) + count })
+            .eq('id', sessionId);
+        }
+      }
+    } catch (e: any) {
+      console.warn('Supabase addTokensToSession fallback:', e);
+    }
+  }
+
+  // 2. LocalStorage sync selalu diperbarui
+  const { sessions, tokens } = getInitialLocalData();
+  const updatedSessions = sessions.map((s) =>
+    s.id === sessionId
+      ? { ...s, participant_quota: (s.participant_quota || 0) + count }
+      : s
+  );
+  const updatedTokens = [...tokens, ...generatedTokens];
+  saveLocalData(updatedSessions, updatedTokens);
+
+  return { newTokens: generatedTokens };
+}
+
 export async function updateTokenNotes(
   tokenCode: string,
   notes: string
