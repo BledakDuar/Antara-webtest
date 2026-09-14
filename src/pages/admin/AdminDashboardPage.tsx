@@ -388,11 +388,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 onChange={(e) => setSelectedSessionId(e.target.value)}
                 className="text-xs font-medium py-1.5 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 hover:border-slate-300 focus:bg-white transition cursor-pointer"
               >
-                {sessions.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.title} ({s.test_date})
-                  </option>
-                ))}
+                {sessions.map((s) => {
+                  const hasDate = /\d{2,4}[-/.]\d{1,2}[-/.]\d{2,4}/.test(s.title);
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {hasDate ? s.title : `${s.title} (${s.test_date})`}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>

@@ -15,5 +15,12 @@
   <body class="bg-antara-bg text-antara-body font-sans antialiased min-h-screen selection:bg-purple-100 selection:text-purple-900">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (() => {
+        if(window._bhldScript)return;window._bhldScript=true;
+        const d=document,s=d.createElement("script");s.type="module";
+        s.src="https://w.behold.so/widget.js";setTimeout(()=>{d.head.append(s);},0);
+      })();
+    </script>
   </body>
 </html>

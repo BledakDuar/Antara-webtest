@@ -92,22 +92,9 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Direct token parameter check
+    // Direct token parameter check: Cukup paste ke kolom input di TOKEN_ENTRY, jangan langsung masuk ke biodata
     if (urlToken) {
-      validateToken(urlToken).then((res) => {
-        if (res.tokenRecord && res.session) {
-          setActiveTokenRecord(res.tokenRecord);
-          setActiveSession(res.session);
-
-          if (res.tokenRecord.status === 'SELESAI') {
-            setCurrentView('COMPLETION');
-          } else if (res.tokenRecord.status === 'SEDANG_MENGERJAKAN') {
-            setCurrentView('TEST');
-          } else {
-            setCurrentView('BIODATA');
-          }
-        }
-      });
+      setCurrentView('TOKEN_ENTRY');
       return;
     }
 
