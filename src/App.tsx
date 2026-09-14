@@ -48,29 +48,32 @@ export const App: React.FC = () => {
         return true;
       };
 
+      const handleAdminEntry = () => {
+        setIsAdminLoggedIn(true);
+        setCurrentView('ADMIN_DASHBOARD');
+        // Clean URL hash and ensure clean /admin path
+        if (window.location.hash.includes('access_token') || !window.location.pathname.startsWith('/admin')) {
+          window.history.replaceState({}, document.title, '/admin');
+        }
+      };
+
       client.auth.getSession().then(async ({ data: { session } }) => {
         if (session?.user?.email) {
           const allowed = await verifyAllowedAdmin(session.user.email);
           if (allowed) {
-            setIsAdminLoggedIn(true);
-            if (window.location.pathname.startsWith('/admin')) {
-              setCurrentView('ADMIN_DASHBOARD');
-            }
+            handleAdminEntry();
           }
         }
       });
 
       const { data: authListener } = client.auth.onAuthStateChange(
-        async (_event, session) => {
+        async (event, session) => {
           if (session?.user?.email) {
             const allowed = await verifyAllowedAdmin(session.user.email);
             if (allowed) {
-              setIsAdminLoggedIn(true);
-              if (window.location.pathname.startsWith('/admin')) {
-                setCurrentView('ADMIN_DASHBOARD');
-              }
+              handleAdminEntry();
             }
-          } else {
+          } else if (event === 'SIGNED_OUT') {
             setIsAdminLoggedIn(false);
           }
         }
@@ -87,6 +90,12 @@ export const App: React.FC = () => {
     const pathname = window.location.pathname;
     const searchParams = new URLSearchParams(window.location.search);
     const urlToken = searchParams.get('token');
+
+    // If returning from Google OAuth callback (hash contains access_token)
+    if (window.location.hash.includes('access_token')) {
+      // Handled by auth listener above
+      return;
+    }
 
     // Admin path detection
     if (pathname.startsWith('/admin')) {
